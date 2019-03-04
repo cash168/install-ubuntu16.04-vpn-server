@@ -10,6 +10,8 @@ IF_EXT="eth0"
 # Internal VPN interface
 IF_INT="ppp+"
 
+IP_EXT="x.x.x.x"
+
 apt-get update
 apt-get install strongswan xl2tpd mc -y
 
@@ -21,22 +23,27 @@ sudo apt-get -y install iptables-persistent
 echo "%any %any : PSK \"$SHAREDKEY\"">/etc/ipsec.secrets
 
 echo "config setup
-        virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12
-        nat_traversal=yes
-        protostack=netkey
-	charondebug=\"ike 5, knl 5, cfg 5, net 5, esp 5, dmn 5,  mgr 5\"
+    virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12
+    nat_traversal=yes
+    protostack=netkey
+    charondebug=\"ike 5, knl 5, cfg 5, net 5, esp 5, dmn 5,  mgr 5\"
+
 conn l2tpvpn
-        type=transport
-        authby=secret
-        pfs=no
-        rekey=no
-        keyingtries=1
-        left=%any
-        leftprotoport=udp/l2tp
-        leftid=@l2tpvpnserver
-        right=%any
-        rightprotoport=udp/%any
-        auto=add">/etc/ipsec.conf
+    type=transport
+    authby=secret
+    pfs=no
+    rekey=no
+    keyingtries=1
+    left=%any
+    leftprotoport=udp/l2tp
+    leftid=$IP_EXT
+    right=%any
+    rightprotoport=udp/%any
+    auto=add
+    keyexchange=ikev1
+    ike=aes256gcm16-aes256gcm12-aes128gcm16-aes128gcm12-sha256-sha1-modp2048-modp4096-modp1024,aes256-aes128-sha256-sha1-modp2048-modp4096-modp1024,3des-sha1-modp1024!
+    esp=aes128gcm12-aes128gcm16-aes256gcm12-aes256gcm16-modp2048-modp4096-modp1024,aes128-aes256-sha1-sha256-modp2048-modp4096-modp1024,aes128-sha1-modp2048,aes128-sha1-modp1024,3des-sha1-modp1024,aes128-aes256-sha1-sha256,aes128-sha1,3des-sha1!
+">/etc/ipsec.conf
 
 service strongswan restart
 
